@@ -46,3 +46,5 @@ For example from the tm-workshop aws account,
          ./upgrade_ubuntu_to_topmed.bash 3.3.2 172.255.39.161 172.255.40.179 172.255.41.187
 Or from the topmeddcc aws account:
          ./upgrade_ubuntu_to_topmed.bash 3.3.2 172.255.44.97 172.255.36.89 172.255.40.251
+
+If the launched AMI has the desired functionality, a new AMI should be created from this launched image.
