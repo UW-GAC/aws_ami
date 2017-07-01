@@ -1,4 +1,4 @@
-Here the attributes of an AMI supporting TOPMed at UW:
+Here are the attributes of an AMI supporting TOPMed at UW:
 
 >     1. Ubuntu server with appropriate security and ssh access
 >     2. Ubuntu packages supporting:
@@ -44,7 +44,7 @@ ssh into the Ubuntu Server (ubuntu) and do the following (for R 3.3.2):
 >        sudo apt-get update && sudo apt-get install -y git
 >     3. Create a folder "update_scripts" and cd to it
 >     4. Clone the ubuntu update scripts from github
->        git clone --depth 1 https://github.com/rollinroy/analysis_pipeline
+>        git clone --depth 1 https://github.com/UW-GAC/aws_ami
 >     5. Update the server by executing the script:
 >        ./upgrade_ubuntu_to_topmed.bash <R_version> <project ip> <home_ip> <admin_ip> [tomped rlib path
 >  For example for the tm-workshop aws account,
