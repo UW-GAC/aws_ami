@@ -1,9 +1,23 @@
-#!/bin/sh
+#!/bin/bash
 # install topmed packages and analysis pipeline
 #    arg1: ip address of topmed_projects volume
 #    optional arg2: R version
 #    optional arg3: base path of the R library for topmed R packages
 # 0. handle argument
+f () {
+    errcode=$? # save the exit code as the first thing done in the trap function
+    echo "error $errorcode"
+    echo "the command executing at the time of the error was"
+    echo "$BASH_COMMAND"
+    echo "on line ${BASH_LINENO[0]}"
+    # do some error handling, cleanup, logging, notification
+    # $BASH_COMMAND contains the command that was being executed at the time of the trap
+    # ${BASH_LINENO[0]} contains the line number in the script of that command
+    # exit the script or return to try again, etc.
+    exit $errcode  # or use some other value or do return instead
+}
+trap f ERR
+
 PROJ_IP=$1
 R_VERSION=${2:-3.3.2}
 LIB_BASE_PATH=${3:-/projects/resources/gactools/R_packages}

@@ -1,9 +1,23 @@
-#!/bin/sh
+#!/bin/bash
 # install R
 #   arg1: R version
 #   optional arg2: base R (R-3, R-4, etc)
+f () {
+    errcode=$? # save the exit code as the first thing done in the trap function
+    echo "error $errorcode"
+    echo "the command executing at the time of the error was"
+    echo "$BASH_COMMAND"
+    echo "on line ${BASH_LINENO[0]}"
+    # do some error handling, cleanup, logging, notification
+    # $BASH_COMMAND contains the command that was being executed at the time of the trap
+    # ${BASH_LINENO[0]} contains the line number in the script of that command
+    # exit the script or return to try again, etc.
+    exit $errcode  # or use some other value or do return instead
+}
+trap f ERR
+
 R_VERSION=$1
-R_BASE=${2:R-3}
+R_BASE=${2:-R-3}
 # download R
 mkdir /usr/local/src/R
 cd /usr/local/src/R

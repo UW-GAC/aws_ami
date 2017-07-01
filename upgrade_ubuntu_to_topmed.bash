@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # upgrade a base ubuntu to have the following:
 #1. Ubuntu server with appropriate security and ssh access
 #2. Ubuntu packages supporting:
