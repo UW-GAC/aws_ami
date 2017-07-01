@@ -16,7 +16,7 @@ Here are the attributes of an AMI supporting TOPMed at UW:
     7. Optional Shiny server
 
 Three EFS volumes for TOPMed need to be created:
-    1. topmed_projects ()
+    1. topmed_projects
     2. topmed_home
     3. topmed_admin
 
@@ -38,11 +38,11 @@ ssh into the Ubuntu Server (ubuntu) and do the following (for R 3.3.2):
     1. Install git
         sudo apt-get update && sudo apt-get install -y git
     2. Create a folder "update_scripts" and cd to it
-    3. Clone the ubuntu update scripts from github
+    3. Clone the aws ami repository (containing the necessary scripts to update Ubuntu) from github
         git clone --depth 1 https://github.com/UW-GAC/aws_ami
     4. Update the server by executing the script:
          ./upgrade_ubuntu_to_topmed.bash <R_version> <project ip> <home_ip> <admin_ip> [tomped rlib path]
-       For example for the tm-workshop aws account,
+For example from the tm-workshop aws account,
          ./upgrade_ubuntu_to_topmed.bash 3.3.2 172.255.39.161 172.255.40.179 172.255.41.187
-       Or for the topmeddcc account:
+Or from the topmeddcc aws account:
          ./upgrade_ubuntu_to_topmed.bash 3.3.2 172.255.44.97 172.255.36.89 172.255.40.251

@@ -18,7 +18,7 @@ Here are the attributes of an AMI supporting TOPMed at UW:
 
 Three EFS volumes for TOPMed need to be created:
 
->     1. topmed_projects ()
+>     1. topmed_projects
 >     2. topmed_home
 >     3. topmed_admin
 
@@ -27,7 +27,6 @@ Creating a desired AMI with the above attributes involves the following steps:
 >     1. From aws console (or cli) create a desired security group (see security group
 >        topmed_cluster_dev) and a desired ssh key pair
 >     2. Optionally from aws console, create a VPC network (see vpc topmed)
->        git clone --depth 1 https://github.com/rollinroy/analysis_pipeline
 >     3. Launch an instance from aws console ec2/instances with the following attributes:
 >         a. Ubuntu Server 16.04
 >         b. t2.large instance
@@ -43,14 +42,14 @@ ssh into the Ubuntu Server (ubuntu) and do the following (for R 3.3.2):
 >     1. install git
 >        sudo apt-get update && sudo apt-get install -y git
 >     3. Create a folder "update_scripts" and cd to it
->     4. Clone the ubuntu update scripts from github
+>     4. Clone the aws ami repository (containing the necessary scripts to update Ubuntu) from github
 >        git clone --depth 1 https://github.com/UW-GAC/aws_ami
 >     5. Update the server by executing the script:
 >        ./upgrade_ubuntu_to_topmed.bash <R_version> <project ip> <home_ip> <admin_ip> [tomped rlib path
->  For example for the tm-workshop aws account,
+>  For example from the tm-workshop aws account,
 
 >    `./upgrade_ubuntu_to_topmed.bash 3.3.2 172.255.39.161 172.255.40.179 172.255.41.187`
 
->  Or for the topmeddcc account:
+>  Or from the topmeddcc aws account:
 
 >     `./upgrade_ubuntu_to_topmed.bash 3.3.2 172.255.44.97      172.255.36.89 172.255.40.251`q
