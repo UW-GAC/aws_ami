@@ -44,7 +44,8 @@ ssh into the Ubuntu Server (ubuntu) and do the following (for R 3.3.2):
 >     3. Create a folder "update_scripts" and cd to it
 >     4. Clone the aws ami repository (containing the necessary scripts to update Ubuntu) from github
 >        git clone --depth 1 https://github.com/UW-GAC/aws_ami
->     5. Update the server by executing the script:
+>     5. cd to aws_ami
+>     6. Update the server by executing the script:
 >        ./upgrade_ubuntu_to_topmed.bash <R_version> <project ip> <home_ip> <admin_ip> [tomped rlib path
 >  For example from the tm-workshop aws account,
 
@@ -52,6 +53,6 @@ ssh into the Ubuntu Server (ubuntu) and do the following (for R 3.3.2):
 
 >  Or from the topmeddcc aws account:
 
->     `./upgrade_ubuntu_to_topmed.bash 3.3.2 172.255.44.97      172.255.36.89 172.255.40.251`
+>    `./upgrade_ubuntu_to_topmed.bash 3.3.2 172.255.44.97 172.255.36.89 172.255.40.251`
 
 If the launched AMI has the desired functionality, a new AMI should be created from this launched image.
