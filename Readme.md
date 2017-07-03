@@ -1,58 +1,83 @@
-Here are the attributes of an AMI supporting TOPMed at UW:
+# Introduction
+This repository contains scripts and descriptions creating custom AWS AMIs with the following software:
+- Ubuntu
+- R
+- RStudio server
+- TOPMed R packages
+- Analysis Pipeline
 
->     1. Ubuntu server with appropriate security and ssh access
->     2. Ubuntu packages supporting:
->         a. Developers (e.g., gcc)
->         b. R and various R packages
->         c. HPC (e.g., hdf5, openmpi)
->     3. Intel's MKL
->     4. Base R
->     5. TOPMed Specific Support
->         a. EFS volumes for projects, home base directory for users (not for ubuntu user)
->         b. TOPMed analysis packages (via bioconductor)
->         c. Miscellaneous R packages (e.g., rmarkdown)
->         d. UW analysis_pipeline
->     6. User accounts in topmed group and having home directories on EFS
->     6. Optional RStudio server
->     7. Optional Shiny server
+Additionally the scripts configure the custom AMI to include the following:
+- User accounts for UW researchers
+- User accounts for RStudio users
+- Mounted EFS volumes containing project data, home directories, and admin folders
 
-Three EFS volumes for TOPMed need to be created:
+To create the AMIs, the following preliminary steps are performed:
+- EFS volumes are created (one time)
+- Creating appropriate security group
+- If necessary, creating a specific VPC
+- Creating SSH key pair(s)
 
->     1. topmed_projects
->     2. topmed_home
->     3. topmed_admin
+After the preliminary steps are done, the following steps are done in creating a custom AMI:
+- A base Ubuntu AMI is launched
+- An upgrading script is executed
+- A new AMI of the upgraded AMI is created (because the upgraded AMI is not saved when the image is terminated)
 
-Creating a desired AMI with the above attributes involves the following steps:
+# EFS volumes
+Three EFS volumes are created via AWS console with the intentions of containing the following data respectively:
+- TOPMed project data (e.g., Freeze 3a)
+- Administrative data helpful for managing AWS environments
+- Directories containing UW user accounts home directories
 
->     1. From aws console (or cli) create a desired security group (see security group
->        topmed_cluster_dev) and a desired ssh key pair
->     2. Optionally from aws console, create a VPC network (see vpc topmed)
->     3. Launch an instance from aws console ec2/instances with the following attributes:
->         a. Ubuntu Server 16.04
->         b. t2.large instance
->         c. select the desired network/subnetwork (that matches the EFS volumes)
->         d. 30GB storage (minimum of 15GB depending on number of users and
->            amount of data on the root device)
->         e. Add an appropriate name
->         f. select the desired security group
->         g. select the desired key pair to be associated with the launched instance
+The three EFS volumes are created once (for each AWS region) and are shared by multiple launched EC2 instances and are considered volumes with shared, persistent data.
 
-ssh into the Ubuntu Server (ubuntu) and do the following (for R 3.3.2):
+# Custom AMI Attributes
+The desired Ubuntu attributes  include the following:
+- Developer support (e.g., gcc)
+- Packages that support building R and R packages
+- HPC packages such as HDF5, MKL, and openmpi
+- UW user accounts on Ubuntu have their home directories on an EFS volume so they can be persisted and shared
 
->     1. install git
->        sudo apt-get update && sudo apt-get install -y git
->     3. Create a folder "update_scripts" and cd to it
->     4. Clone the aws ami repository (containing the necessary scripts to update Ubuntu) from github
->        git clone --depth 1 https://github.com/UW-GAC/aws_ami
->     5. cd to aws_ami
->     6. Update the server by executing the script:
->        ./upgrade_ubuntu_to_topmed.bash <R_version> <project ip> <home_ip> <admin_ip> [tomped rlib path
->  For example from the tm-workshop aws account,
+R is built with the following support:
+- MKL and LAPACK
+- X11
+- Cairo and Pango
+- PNG
+- Other infrastructure to support various R packages
 
->    `./upgrade_ubuntu_to_topmed.bash 3.3.2 172.255.39.161 172.255.40.179 172.255.41.187`
+RStudio server is basically installed as a standard installation.
 
->  Or from the topmeddcc aws account:
+TOPmed packages are installed as described in UW-GAC githb.  Installation is based on Bioconductor and github repositories.  The packages are installed on EFS project volume and can be shared by multiple launched EC2 instances provided the instances are running the correct version of R.
 
->    `./upgrade_ubuntu_to_topmed.bash 3.3.2 172.255.44.97 172.255.36.89 172.255.40.251`
+Analysis pipeline is installed from github supporting linux SGE clusters, AWS cfnclusters, and AWS batch services.
 
-If the launched AMI has the desired functionality, a new AMI should be created from this launched image.
+# Creating Custom AMIs
+The specific steps (not including the preliminary steps described above) of creating a desired custom AMI involves performing the following:
+1. Launch an instance from aws console ec2/instances with the following attributes
+    - Ubuntu Server 16.04
+    - t2.large instance
+    - vpc network associated with the EFS volumes, security groups, etc
+    - 30GB storage on the root device
+    - the desired seurity group and SSH key pair
+2. Log into the launched instance and do the following:
+    - Install git
+        - `sudo apt-get update && sudo apt-get install -y git`
+    - Create the folder _**update__scripts**_
+    - cd to _**update__scripts**_
+    - Clone the github <i>**aws__ami**</i> repository containing the various scripts
+        - `git clone --depth 1 https://github.com/UW-GAC/aws_ami`
+    - Upgrade the AMI by executing the script <i>**upgrade_ubuntu_to_topmed**</i> which takes the following required positional arguments:
+        - _**R version**_
+        - _**IP address of project data EFS volume**_
+        - _**IP address of home directories EFS volume**_
+        - _**IP address of admin folder EFS volume**_
+    - An optional argument, in the fifth position, can be specified to identify the root folder of TOPMed's R package library; the default is: **/projects/resources/gactools/R_packages**
+
+
+ # Examples
+ ```bash
+# upgrade an ami on the tm-workshop account
+./upgrade_ubuntu_to_topmed.bash 3.3.2 172.255.39.161 172.255.40.179 172.255.41.187
+
+# upgrade an amni on the topmeddcc account
+./upgrade_ubuntu_to_topmed.bash 3.3.2 172.255.44.97 172.255.36.89 172.255.40.251
+ ```
