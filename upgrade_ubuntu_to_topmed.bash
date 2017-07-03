@@ -49,62 +49,91 @@ echo ">>>   Home IP: $HOME_IP"
 echo ">>>   Admin IP: $ADMIN_IP"
 # update basic ubuntu
 echo ">>> Update Ubuntu packages ..."
-./update_ubuntu.bash > update_ubuntu.log
+./update_ubuntu.bash > update_ubuntu.log 2>&1
 
 echo ">>> Update Ubuntu with hpc packages ..."
-./install_ubuntu_hpc.bash > update_ubuntu_hpc.log
+./install_ubuntu_hpc.bash > update_ubuntu_hpc.log 2>&1
 
 echo ">>> Installing R $R_VERSION ..."
-./install_R.bash $R_VERSION > install_r.log
+./install_R.bash $R_VERSION > install_r.log 2>&1
 # manually, mount the EFS volumes (the ip address depends on the
 #                                  created EFS volumes)
 echo ">>> Mounting EFS volumes ..."
-sudo mkdir /projects
-sudo mkdir /topmed_home
-sudo mkdir /admin
-sudo mount -t nfs4 -o vers=4.1 $PROJ_IP:/ /projects
-sudo mount -t nfs4 -o vers=4.1 $HOME_IP:/ /topmed_home
-sudo mount -t nfs4 -o vers=4.1 $ADMIN_IP:/ /admin
+if [ ! -d /projects ]; then
+    sudo mkdir /projects
+fi
+if [ ! -d /topmed_home ]; then
+    sudo mkdir /topmed_home
+fi
+if [ ! -d /admin ]; then
+    sudo mkdir /admin
+fi
+if ! sudo mount | grep $PROJ_IP > /dev/null; then
+    sudo mount -t nfs4 -o vers=4.1 $PROJ_IP:/ /projects
+else
+    echo "$PROJ_IP already mounted"
+fi
+if ! sudo mount | grep $HOME_IP > /dev/null; then
+    sudo mount -t nfs4 -o vers=4.1 $HOME_IP:/ /topmed_home
+else
+    echo "$HOME_IP already mounted"
+fi
+if ! sudo mount | grep $ADMIN_IP > /dev/null; then
+    sudo mount -t nfs4 -o vers=4.1 $ADMIN_IP:/ /admin
+else
+    echo "$ADMIN_IP already mounted"
+fi
 # install TOPMed R packages
 echo ">>> Installing TOPMed R packages ..."
-./install_topmed_ubuntu.bash $PROJ_IP $R_VERSION > install_topmed.log
+./install_topmed_ubuntu.bash $PROJ_IP $R_VERSION > install_topmed.log 2>&1
+
+echo ">>> Adding topmed group ..."
 # create the topmed group
-sudo addgroup topmed
-# update ubuntu account (current login)
-sudo usermod -a -G topmed ubuntu
-sudo usermod -g topmed
+if ! compgen -g | grep topmed > /dev/null; then
+    sudo addgroup topmed
+    # update ubuntu account (current login)
+    sudo usermod -a -G topmed ubuntu
+    sudo usermod -g topmed
+fi
 
 # create user account
 echo ">>> Creating UW user accounts  ..."
-sudo adduser --home /topmed_home/levined --ingroup topmed --disabled-password --gecos GECOS levined
-sudo adduser --home /topmed_home/kuraisa --ingroup topmed --disabled-password --gecos GECOSkuraisa
-sudo adduser --home /topmed_home/sdmorris --ingroup topmed --disabled-password --gecos GECOS sdmorris
-
+if ! compgen -u | grep levined > /dev/null; then
+    sudo adduser --home /topmed_home/levined --ingroup topmed --disabled-password --gecos GECOS levined
+fi
+if ! compgen -u | grep kuraisa > /dev/null; then
+    sudo adduser --home /topmed_home/kuraisa --ingroup topmed --disabled-password --gecos GECOS kuraisa
+fi
+if ! compgen -u | grep sdmorris > /dev/null; then
+    sudo adduser --home /topmed_home/sdmorris --ingroup topmed --disabled-password --gecos GECOS sdmorris
+fi
 # install RStudio server
 echo ">>> Install RStudio server  ..."
-cd /usr/local/src
-if [ ! -d rstudio-server ]; then
-   sudo mkdir rstudio-server
+# install RStudio
+if [ ! -d /usr/local/src/rstudio ]; then
+    sudo apt-get install gdebi-core
+    mkdir /usr/local/src/rstudio
+    cd /usr/local/src/rstudio
+    wget https://download2.rstudio.org/rstudio-server-1.0.143-amd64.deb
+    sudo dpkg -i rstudio-server-1.0.143-amd64.deb
+
+    # add uw users to rstudio group
+    echo ">>> Adding rstudio-server group to UW accounts ..."
+    sudo usermod -a -G rstudio-server levined
+    sudo usermod -a -G rstudio-server kuraisa
+    sudo usermod -a -G rstudio-server sdmorris
+    # rstudio users
+    echo ">>> Creating RStudio accounts"
+    sudo adduser --ingroup rstudio-server --disabled-password --gecos GECOS rstudio1
+    sudo adduser --ingroup rstudio-server --disabled-password --gecos GECOS rstudio2
+    sudo adduser --ingroup rstudio-server --disabled-password --gecos GECOS rstudio3
+
+    # to add password (for rstudio) create a file
+    echo "rstudio1:rstudioserver1" | sudo chpasswd
+    echo "rstudio2:rstudioserver2" | sudo chpasswd
+    echo "rstudio3:rstudioserver3" | sudo chpasswd
+else
+    echo "RStudio Server already built"
 fi
-cd rstudio-server
-sudo apt-get install gdebi-core
-wget https://download2.rstudio.org/rstudio-server-1.0.143-amd64.deb
-sudo dpkg -i  rstudio-server-1.0.143-amd64.deb
-
-# add uw users to rstudio group
-echo ">>> Adding rstudio-server group to UW accounts ..."
-sudo usermod -a -G rstudio-server levined
-sudo usermod -a -G rstudio-server kuraisa
-sudo usermod -a -G rstudio-server sdmorris
-# rstudio users
-echo ">>> Creating RStudio accounts"
-sudo adduser --ingroup rstudio-server --disabled-password --gecos GECOS rstudio1
-sudo adduser --ingroup rstudio-server --disabled-password --gecos GECOS rstudio2
-sudo adduser --ingroup rstudio-server --disabled-password --gecos GECOS rstudio3
-
-# to add password (for rstudio) create a file
-echo "rstudio1:rstudioserver1" | sudo chpasswd
-echo "rstudio2:rstudioserver2" | sudo chpasswd
-echo "rstudio3:rstudioserver3" | sudo chpasswd
 
 # install shiny server

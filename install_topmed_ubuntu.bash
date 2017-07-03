@@ -34,7 +34,7 @@ else
     sudo mount -t nfs4 -o vers=4.1 "$PROJ_IP":/ "$PFOLDER"
 fi
 # 3. create a path to R library
-LIB_PATH=$LIB_BASE_PATH"/lib-R-"$R_VERSION
+LIB_PATH=$LIB_BASE_PATH"/library-R-"$R_VERSION
 echo "Setting lib path for topmed R packages to $LIB_PATH"
 if [ ! -d "$LIB_PATH" ]; then
     sudo mkdir "$LIB_PATH"
@@ -42,18 +42,27 @@ fi
 # 4. call a python script to install topmed packages
 RSCRIPT="installtopmed.R"
 R_HOME="/usr/local/R-$R_VERSION/lib/R"
-python ./install_topmed.py "$LIB_PATH" -s "$RSCRIPT"
+if [ -f $RSCRIPT ]; then
+    rm $RSCRIPT
+fi
+python ./install_topmed_ubuntu.py "$LIB_PATH" -s "$RSCRIPT"
 if [ $? -eq 0 ]; then
-    # we need set R_LIBS_SITE
-    site_fn="$R_HOME/etc/Renviron.site"
-    echo "R_LIBS_SITE=$LIB_PATH" > $site_fn
-    # execute the script to install in site
-    chmod +x "$RSCRIPT"
-    ./"$RSCRIPT"
+    if [ -f $RSCRIPT ]; then
+        echo "Installing TOPMed packages ..."
+        # we need set R_LIBS_SITE
+        site_fn="$R_HOME/etc/Renviron.site"
+        echo "R_LIBS_SITE=$LIB_PATH" > $site_fn
+        # execute the script to install in site
+        chmod +x "$RSCRIPT"
+        ./"$RSCRIPT"
+    else
+        echo "TOPMed packages already installed"
+    fi
 fi
 # 5. install analysis_pipeliine
 AP_PATH="/usr/local/src/topmed/analysis_pipeline"
 if [ ! -d "$AP_PATH" ]; then
+    echo "Installing analysis_pipeline ..."
     mkdir /usr/local/src/topmed
     cd /usr/local/src/topmed
     git clone https://github.com/smgogarten/analysis_pipeline
@@ -62,4 +71,6 @@ if [ ! -d "$AP_PATH" ]; then
     site_fn="$R_HOME/etc/Renviron.site"
     echo "R_LIBS_SITE=$LIB_PATH" > $site_fn
     R CMD INSTALL TopmedPipeline
+else
+    echo "Analysis_pipeline already installed"
 fi

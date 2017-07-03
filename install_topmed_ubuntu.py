@@ -20,6 +20,7 @@ args = parser.parse_args()
 rlibpath = args.rlibpath
 rscript = args.script
 
+print(">>> Creating script to install topmed R packages into " + rlibpath)
 # check if it exists
 
 if not os.path.isdir( rlibpath ):
@@ -31,6 +32,7 @@ bioc_pkgs=["SeqVarTools"  , "SNPRelate", "GENESIS", "argparser", "dplyr", "tidyr
 r_pkgs=["devtools", "survey", "CompQuadForm", "rmarkdown", "GENESIS"]
 
 add_bp=False
+fileHdr='#!/usr/local/bin/Rscript --no-save --slave\n'
 for bp in bioc_pkgs:
     # check if the directory exist; if not
     if not os.path.isdir( rlibpath+"/"+bp ):
@@ -38,7 +40,7 @@ for bp in bioc_pkgs:
             add_bp=True
             # open the file; write the the first lines
             sfile=open(rscript,'w')
-            sfile.write('#!/usr/local/bin/Rscript --vanilla --no-save --slave\n')
+            sfile.write(fileHdr)
             sfile.write('source("https://bioconductor.org/biocLite.R")\n')
         # write the PKG
         sfile.write('biocLite("%s")\n' % bp )
@@ -51,15 +53,13 @@ for rp in r_pkgs:
             if rp != "GENESIS":
                 sfile.write('install.packages("%s", rep="https://ftp.osuosl.org/pub/cran/")\n' % rp)
             else:
-                sfile.write('library(devtools)')
+                sfile.write('library(devtools)\n')
                 sfile.write('devtools::install_git("git://github.com/smgogarten/GENESIS.git")\n')
         else:
             add_rp=True
             sfile=open(rscript,'w')
-            sfile.write('#!/usr/local/bin/Rscript --vanilla --no-save --slave\n')
+            sfile.write(fileHdr)
 # close the file
 if add_rp or add_bp:
     sfile.close()
-    sys.exit(0)
-else:
-    sys.exit(1)
+sys.exit(0)

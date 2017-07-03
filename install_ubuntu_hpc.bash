@@ -28,16 +28,27 @@ sudo apt-get update && sudo apt-get install -y \
   openmpi-doc
 
 # mkl
-sudo chown -R ubuntu /usr/local
-mkdir /usr/local/src/mkl
-cp ./l_mkl_2017.2.174.tgz /usr/local/src/mkl
-echo "\n\n*** building mkl ... ***\n\n"
-cd /usr/local/src/mkl
-tar -xzvf l_mkl_2017.2.174.tgz
-cd /usr/local/src/mkl/l_mkl_2017.2.174
-sed 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' silent.cfg > silent_build.cfg
-sudo ./install.sh --silent ./silent_build.cfg
+if [ ! -f /etc/ld.so.conf.d/mkl_intel64.conf ]; then
+    sudo chown -R ubuntu /usr/local
+    if [ ! -d /usr/local/src/mkl ]; then
+       mkdir /usr/local/src/mkl
+    fi
+    if [ ! -f /usr/local/src/mkl/l_mkl_2017.2.174.tgz ]; then
+       cp ./l_mkl_2017.2.174.tgz /usr/local/src/mkl
+    fi
+    echo ">>> building mkl ... "
+    cd /usr/local/src/mkl
+    if [ ! -d l_mkl_2017.2.174 ]; then
+       tar -xzvf l_mkl_2017.2.174.tgz
+    fi
 
-echo "/opt/intel/mkl/lib/intel64" > mkl.conf
-sudo cp ./mkl.conf /etc/ld.so.conf.d/mkl_intel64.conf
-sudo ldconfig
+    cd /usr/local/src/mkl/l_mkl_2017.2.174
+    sed 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' silent.cfg > silent_build.cfg
+    sudo ./install.sh --silent ./silent_build.cfg
+
+    echo "/opt/intel/mkl/lib/intel64" > mkl.conf
+    sudo cp ./mkl.conf /etc/ld.so.conf.d/mkl_intel64.conf
+    sudo ldconfig
+else
+    echo "mkl already built"
+fi
