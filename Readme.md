@@ -65,6 +65,7 @@ The specific steps (not including the preliminary steps described above) of crea
     - cd to _**update__scripts**_
     - Clone the github <i>**aws__ami**</i> repository containing the various scripts
         - `git clone --depth 1 https://github.com/UW-GAC/aws_ami`
+    - **MKL is required for this upgrade; it must be downloaded to this directory (or copied from an known location).  It is free but is an interactive download**
     - Upgrade the AMI by executing the script <i>**upgrade_ubuntu_to_topmed**</i> which takes the following required positional arguments:
         - _**R version**_
         - _**IP address of project data EFS volume**_
