@@ -93,20 +93,29 @@ if ! compgen -g | grep topmed > /dev/null; then
     sudo addgroup topmed
     # update ubuntu account (current login)
     sudo usermod -a -G topmed ubuntu
-    sudo usermod -g topmed
+    sudo usermod -g topmed ubuntu
 fi
 
 # create user account
 echo ">>> Creating UW user accounts  ..."
-if ! compgen -u | grep levined > /dev/null; then
-    sudo adduser --home /topmed_home/levined --ingroup topmed --disabled-password --gecos GECOS levined
+uaccnt=levined
+if ! compgen -u | grep $uaccnt > /dev/null; then
+    sudo adduser --home /topmed_home/$uaccnt --ingroup topmed --disabled-password --gecos GECOS $uaccnt
+    sudo adduser $uaccnt sudo
 fi
-if ! compgen -u | grep kuraisa > /dev/null; then
-    sudo adduser --home /topmed_home/kuraisa --ingroup topmed --disabled-password --gecos GECOS kuraisa
+
+uaccnt=kuraisa
+if ! compgen -u | grep $uaccnt > /dev/null; then
+    sudo adduser --home /topmed_home/$uaccnt --ingroup topmed --disabled-password --gecos GECOS $uaccnt
+    sudo adduser $uaccnt sudo
 fi
-if ! compgen -u | grep sdmorris > /dev/null; then
-    sudo adduser --home /topmed_home/sdmorris --ingroup topmed --disabled-password --gecos GECOS sdmorris
+
+uaccnt=sdmorris
+iif ! compgen -u | grep $uaccnt > /dev/null; then
+    sudo adduser --home /topmed_home/$uaccnt --ingroup topmed --disabled-password --gecos GECOS $uaccnt
+    sudo adduser $uaccnt sudo
 fi
+
 # install RStudio server
 echo ">>> Install RStudio server  ..."
 # install RStudio
