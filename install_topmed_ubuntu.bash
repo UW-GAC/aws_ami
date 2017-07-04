@@ -63,7 +63,9 @@ fi
 AP_PATH="/usr/local/src/topmed/analysis_pipeline"
 if [ ! -d "$AP_PATH" ]; then
     echo "Installing analysis_pipeline ..."
-    mkdir /usr/local/src/topmed
+    if [ ! -d /usr/local/src/topmed ]; then
+        mkdir /usr/local/src/topmed
+    fi
     cd /usr/local/src/topmed
     git clone https://github.com/smgogarten/analysis_pipeline
     cd /usr/local/src/topmed/analysis_pipeline
