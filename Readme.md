@@ -63,9 +63,10 @@ The specific steps (not including the preliminary steps described above) of crea
         - `sudo apt-get update && sudo apt-get install -y git`
     - Create the folder _**update__scripts**_
     - cd to _**update__scripts**_
-    - Clone the github <i>**aws__ami**</i> repository containing the various scripts
+    - Clone the github <i>**aws_ami**</i> repository containing the various scripts
         - `git clone --depth 1 https://github.com/UW-GAC/aws_ami`
-    - **MKL is required for this upgrade; it must be downloaded to this directory (or copied from an known location).  It is free but is an interactive download**
+    - cd to _**aws__ami**_
+    - **MKL is required for this upgrade and a particular version is required.**   Since MKL can only be downloaded from Intel interactively, you should copy <i>**l_mkl_2017.2.174.tgz**</i> to this current directory _**aws__ami**_.  It is suggest to scp <i>**l_mkl_2017.2.174.tgz**</i> to the _**aws__ami**_ folder.
     - Upgrade the AMI by executing the script <i>**upgrade_ubuntu_to_topmed**</i> which takes the following required positional arguments:
         - _**R version**_
         - _**IP address of project data EFS volume**_
@@ -82,3 +83,6 @@ The specific steps (not including the preliminary steps described above) of crea
 # upgrade an amni on the topmeddcc account
 ./upgrade_ubuntu_to_topmed.bash 3.3.2 172.255.44.97 172.255.36.89 172.255.40.251
  ```
+# Notes
+1. If there is an error (either in the script or the configuration), re-execute the script after fixing the error.
+2.  After the uprade has completed, using aws console a new image can be created to preserve the upgrade changes.
