@@ -111,7 +111,7 @@ if ! compgen -u | grep $uaccnt > /dev/null; then
 fi
 
 uaccnt=sdmorris
-iif ! compgen -u | grep $uaccnt > /dev/null; then
+if ! compgen -u | grep $uaccnt > /dev/null; then
     sudo adduser --home /topmed_home/$uaccnt --ingroup topmed --disabled-password --gecos GECOS $uaccnt
     sudo adduser $uaccnt sudo
 fi
