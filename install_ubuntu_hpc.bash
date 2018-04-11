@@ -28,21 +28,24 @@ sudo apt-get update && sudo apt-get install -y \
   openmpi-doc
 
 # mkl
+MKL_VERSION=2018.1.163
+MKL_DIR=l_mkl_$MKL_VERSION
+MKL_FILE=$MKL_DIR.tgz
 if [ ! -f /etc/ld.so.conf.d/mkl_intel64.conf ]; then
     sudo chown -R ubuntu /usr/local
     if [ ! -d /usr/local/src/mkl ]; then
        mkdir /usr/local/src/mkl
     fi
-    if [ ! -f /usr/local/src/mkl/l_mkl_2017.2.174.tgz ]; then
-       cp ./l_mkl_2017.2.174.tgz /usr/local/src/mkl
+    if [ ! -f /usr/local/src/mkl/$MKL_FILE ]; then
+       cp ./$MKL_FILE /usr/local/src/mkl
     fi
     echo ">>> building mkl ... "
     cd /usr/local/src/mkl
-    if [ ! -d l_mkl_2017.2.174 ]; then
-       tar -xzvf l_mkl_2017.2.174.tgz
+    if [ ! -d $MKL_DIR ]; then
+       tar -xzvf $MKL_FILE
     fi
 
-    cd /usr/local/src/mkl/l_mkl_2017.2.174
+    cd /usr/local/src/mkl/$MKL_DIR
     sed 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' silent.cfg > silent_build.cfg
     sudo ./install.sh --silent ./silent_build.cfg
 

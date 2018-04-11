@@ -1,8 +1,7 @@
 #!/bin/bash
 # install topmed packages and analysis pipeline
-#    arg1: ip address of topmed_projects volume
-#    optional arg2: R version
-#    optional arg3: base path of the R library for topmed R packages
+#    optional arg1: R version
+#    optional arg2: branch of analysis pipeline
 # 0. handle argument
 f () {
     errcode=$? # save the exit code as the first thing done in the trap function
@@ -18,60 +17,29 @@ f () {
 }
 trap f ERR
 
-PROJ_IP=$1
-R_VERSION=${2:-3.3.2}
-LIB_BASE_PATH=${3:-/projects/resources/gactools/R_packages}
-# 1. mount the efs project folder
-PFOLDER="/projects"
-if [ ! -d "$PFOLDER" ]; then
-  sudo mkdir $PFOLDER
-  sudo chown ubuntu $PFOLDER
-fi
-# 2. mount the efs volume
-if sudo mount | grep $PROJ_IP > /dev/null; then
-    echo $PFOLDER already mounted
-else
-    sudo mount -t nfs4 -o vers=4.1 "$PROJ_IP":/ "$PFOLDER"
-fi
-# 3. create a path to R library
-LIB_PATH=$LIB_BASE_PATH"/library-R-"$R_VERSION
-echo "Setting lib path for topmed R packages to $LIB_PATH"
-if [ ! -d "$LIB_PATH" ]; then
-    sudo mkdir "$LIB_PATH"
-fi
-# 4. call a python script to install topmed packages
+R_VERSION=${1:-3.3.4}
+AP_BRANCH=${2:-devel}
+# call a python script to install topmed packages
 RSCRIPT="installtopmed.R"
 R_HOME="/usr/local/R-$R_VERSION/lib/R"
 if [ -f $RSCRIPT ]; then
     rm $RSCRIPT
 fi
-python ./install_topmed_ubuntu.py "$LIB_PATH" -s "$RSCRIPT"
+python ./install_topmed_ubuntu.py  -s "$RSCRIPT"
 if [ $? -eq 0 ]; then
     if [ -f $RSCRIPT ]; then
         echo "Installing TOPMed packages ..."
-        # we need set R_LIBS_SITE
-        site_fn="$R_HOME/etc/Renviron.site"
-        echo "R_LIBS_SITE=$LIB_PATH" > $site_fn
-        # execute the script to install in site
         chmod +x "$RSCRIPT"
         ./"$RSCRIPT"
-    else
-        echo "TOPMed packages already installed"
     fi
 fi
-# 5. install analysis_pipeliine
-AP_PATH="/usr/local/src/topmed/analysis_pipeline"
+# install analysis_pipeliine
+AP_PATH="/usr/local/analysis_pipeline"
 if [ ! -d "$AP_PATH" ]; then
     echo "Installing analysis_pipeline ..."
-    if [ ! -d /usr/local/src/topmed ]; then
-        mkdir /usr/local/src/topmed
-    fi
-    cd /usr/local/src/topmed
-    git clone https://github.com/smgogarten/analysis_pipeline
-    cd /usr/local/src/topmed/analysis_pipeline
-    # we need set R_LIBS_SITE (just to make sure)
-    site_fn="$R_HOME/etc/Renviron.site"
-    echo "R_LIBS_SITE=$LIB_PATH" > $site_fn
+    cd /usr/local
+    git clone -b $AP_BRANCH https://github.com/UW-GAC/analysis_pipeline.git
+    cd $AP_PATH
     R CMD INSTALL TopmedPipeline
 else
     echo "Analysis_pipeline already installed"

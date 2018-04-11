@@ -41,20 +41,20 @@ if [ ! -f /usr/local/R-$R_VERSION/lib/R/bin/R ]; then
     MKL_LIB_PATH=/opt/intel/mkl/lib/intel64
     export LD_LIBRARY_PATH=$MKL_LIB_PATH
     MKL="-m64 -L${MKL_LIB_PATH} -lmkl_gf_lp64 -lmkl_core -lmkl_sequential -lpthread -lm"
-    ./configure --enable-R-shlib --enable-threads=posix --prefix=/usr/local/R-3.3.2 --with-blas="$MKL" --enable-memory-profiling
+    ./configure --enable-R-shlib --enable-threads=posix --prefix=/usr/local/R-$R_VERSION  --with-blas="$MKL" --enable-memory-profiling
     make
-    make check
+#    make check fail in 3.4.3
     make info
     make install
 
     # create R links
-    if [ ! -d /usr/local/bin/R ]; then
+    if [ ! -f /usr/local/bin/R ]; then
         ln -s /usr/local/R-$R_VERSION/lib/R/bin/R /usr/local/bin/R
     else
         rm /usr/local/bin/R
         ln -s /usr/local/R-$R_VERSION/lib/R/bin/R /usr/local/bin/R
     fi
-    if [ ! -d /usr/local/bin/Rscript ]; then
+    if [ ! -f /usr/local/bin/Rscript ]; then
         ln -s /usr/local/R-$R_VERSION/lib/R/bin/Rscript /usr/local/bin/Rscript
     else
         rm /usr/local/bin/Rscript

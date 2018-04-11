@@ -36,6 +36,7 @@ The desired Ubuntu attributes  include the following:
 - Packages that support building R and R packages
 - HPC packages such as HDF5, MKL, and openmpi
 - UW user accounts on Ubuntu have their home directories on an EFS volume so they can be persisted and shared
+- A new <i>**/etc/rc.local**</i> is created mounting the EFS volumes
 
 R is built with the following support:
 - MKL and LAPACK
@@ -69,20 +70,20 @@ The specific steps (not including the preliminary steps described above) of crea
     - **MKL is required for this upgrade and a particular version is required.**   Since MKL can only be downloaded from Intel interactively, you should copy <i>**l_mkl_2017.2.174.tgz**</i> to this current directory _**aws__ami**_.  It is suggest to scp <i>**l_mkl_2017.2.174.tgz**</i> to the _**aws__ami**_ folder.
     - Upgrade the AMI by executing the script <i>**upgrade_ubuntu_to_topmed**</i> which takes the following required positional arguments:
         - _**R version**_
-        - _**IP address of project data EFS volume**_
-        - _**IP address of home directories EFS volume**_
-        - _**IP address of admin folder EFS volume**_
+        - _**DNS address of project data EFS volume**_
+        - _**DNS address of home directories EFS volume**_
+        - _**DNS address of admin folder EFS volume**_
     - An optional argument, in the fifth position, can be specified to identify the root folder of TOPMed's R package library; the default is: **/projects/resources/gactools/R_packages**
+    - Examples executing <i>**upgrade_ubuntu_to_topmed**</i>:
 
-
- # Examples
- ```bash
+```bash
 # upgrade an ami on the tm-workshop account
 ./upgrade_ubuntu_to_topmed.bash 3.3.2 172.255.39.161 172.255.40.179 172.255.41.187
 
-# upgrade an amni on the topmeddcc account
+# upgrade an ami on the topmeddcc account
 ./upgrade_ubuntu_to_topmed.bash 3.3.2 172.255.44.97 172.255.36.89 172.255.40.251
  ```
 # Notes
 1. If there is an error (either in the script or the configuration), re-execute the script after fixing the error.
-2.  After the uprade has completed, using aws console a new image can be created to preserve the upgrade changes.
+2. After the uprade has completed, using aws console a new image can be created to preserve the upgrade changes.
+3. The new <i>**/etc/rc.local**</i> created by the script overwrites the existing file.  The existing file does nothing by default.

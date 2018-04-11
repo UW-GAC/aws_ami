@@ -8,7 +8,7 @@
 #3. Intel's MKL
 #4. Base R
 #5. TOPMed Specific Support
-#    a. EFS volumes for projects, home base directory for users (not for ubuntu user)
+#    a. NFS volume for projects, home base directory for users (not for ubuntu user)
 #    b. TOPMed analysis packages (via bioconductor)
 #    c. Miscellaneous R packages (e.g., rmarkdown)
 #    d. UW analysis_pipeline
@@ -17,14 +17,10 @@
 #8. Optional Shiny server
 #
 # arg1: R version
-# arg2: ip address of /projects
-# arg3: ip address of /topmed_home
-# arg4: ip address of /admin
-# opt arg4: path of topmed r packages in /projects
-if [ "$#" -lt 4 ]; then
-    echo "ERROR: At least 4 args required: R_version, Proj_ip, Home_ip, and Admin_ip"
-    exit 1
-fi
+# arg2: analysis pipeline branch
+# arg2: NFS address /projects
+# arg3: NFS address /topmed_home
+# arg4: NFS address /admin
 f () {
     errcode=$? # save the exit code as the first thing done in the trap function
     echo "error $errorcode"
@@ -38,15 +34,16 @@ f () {
     exit $errcode  # or use some other value or do return instead
 }
 trap f ERR
-R_VERSION=$1
-PROJ_IP=$2
-HOME_IP=$3
-ADMIN_IP=$4
-TMLIB_PATH=${5:-/projects/resources/gactools/R_packages}
+R_VERSION=${1:-3.4.3}
+AP_BRANCH=${2:-devel}
+PROJ_IP=${3:-172.255.40.56:/export_ebs/projects}
+HOME_IP=${4:-172.255.40.56:/export_ebs/topmed_home}
+ADMIN_IP=${5:-172.255.40.56:/export_ebs/topmed_admin}
 echo ">>> Upgrading Ubuntu to R $R_VERSION"
-echo ">>>   Project IP: $PROJ_IP"
-echo ">>>   Home IP: $HOME_IP"
-echo ">>>   Admin IP: $ADMIN_IP"
+echo ">>>   Analysis Pipeline: $AP_BRANCH"
+echo ">>>   Project NFS address: $PROJ_IP"
+echo ">>>   Home NFS address: $HOME_IP"
+echo ">>>   Admin NFS address: $ADMIN_IP"
 # update basic ubuntu
 echo ">>> Update Ubuntu packages ..."
 ./update_ubuntu.bash > update_ubuntu.log 2>&1
@@ -56,9 +53,13 @@ echo ">>> Update Ubuntu with hpc packages ..."
 
 echo ">>> Installing R $R_VERSION ..."
 ./install_R.bash $R_VERSION > install_r.log 2>&1
+
+# install TOPMed R packages
+echo ">>> Installing TOPMed R packages ..."
+./install_topmed_ubuntu.bash $R_VERSION $AP_BRANCH > install_topmed.log 2>&1
 # manually, mount the EFS volumes (the ip address depends on the
 #                                  created EFS volumes)
-echo ">>> Mounting EFS volumes ..."
+echo ">>> Mounting NFS volumes ..."
 if [ ! -d /projects ]; then
     sudo mkdir /projects
 fi
@@ -69,23 +70,20 @@ if [ ! -d /admin ]; then
     sudo mkdir /admin
 fi
 if ! sudo mount | grep $PROJ_IP > /dev/null; then
-    sudo mount -t nfs4 -o vers=4.1 $PROJ_IP:/ /projects
+    sudo mount -t nfs4 -o vers=4.1 $PROJ_IP /projects
 else
     echo "$PROJ_IP already mounted"
 fi
 if ! sudo mount | grep $HOME_IP > /dev/null; then
-    sudo mount -t nfs4 -o vers=4.1 $HOME_IP:/ /topmed_home
+    sudo mount -t nfs4 -o vers=4.1 $HOME_IP /topmed_home
 else
     echo "$HOME_IP already mounted"
 fi
 if ! sudo mount | grep $ADMIN_IP > /dev/null; then
-    sudo mount -t nfs4 -o vers=4.1 $ADMIN_IP:/ /admin
+    sudo mount -t nfs4 -o vers=4.1 $ADMIN_IP /admin
 else
     echo "$ADMIN_IP already mounted"
 fi
-# install TOPMed R packages
-echo ">>> Installing TOPMed R packages ..."
-./install_topmed_ubuntu.bash $PROJ_IP $R_VERSION > install_topmed.log 2>&1
 
 echo ">>> Adding topmed group ..."
 # create the topmed group
@@ -123,8 +121,8 @@ if [ ! -d /usr/local/src/rstudio ]; then
     sudo apt-get install gdebi-core
     mkdir /usr/local/src/rstudio
     cd /usr/local/src/rstudio
-    wget https://download2.rstudio.org/rstudio-server-1.0.143-amd64.deb
-    sudo dpkg -i rstudio-server-1.0.143-amd64.deb
+    wget https://download2.rstudio.org/rstudio-server-1.1.442-amd64.deb
+    sudo gdebi rstudio-server-1.1.442-amd64.deb
 
     # add uw users to rstudio group
     echo ">>> Adding rstudio-server group to UW accounts ..."
@@ -144,5 +142,19 @@ if [ ! -d /usr/local/src/rstudio ]; then
 else
     echo "RStudio Server already built"
 fi
+
+echo "Modifying /etc/rc.local to mount nfs volumes ..."
+# update /etc/rc.local to mount efs volumes
+echo '#!/bin/sh -e' > rc.local
+echo '#' >> rc.local
+echo '# rc.local' >> rc.local
+echo '# ' >> rc.local
+echo '# mount efs topmed volumes' >> rc.local
+echo mount -t nfs4 -o vers=4.1 $PROJ_IP /projects >> rc.local
+echo mount -t nfs4 -o vers=4.1 $HOME_IP /topmed_home >> rc.local
+echo mount -t nfs4 -o vers=4.1 $ADMIN_IP /admin >> rc.local
+echo exit 0 >> rc.local
+sudo cp rc.local /etc/rc.local
+
 
 # install shiny server
