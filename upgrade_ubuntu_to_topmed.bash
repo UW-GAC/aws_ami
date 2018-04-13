@@ -36,9 +36,9 @@ f () {
 trap f ERR
 R_VERSION=${1:-3.4.3}
 AP_BRANCH=${2:-devel}
-PROJ_IP=${3:-172.255.40.56:/export_ebs/projects}
-HOME_IP=${4:-172.255.40.56:/export_ebs/topmed_home}
-ADMIN_IP=${5:-172.255.40.56:/export_ebs/topmed_admin}
+PROJ_IP=${3:-172.255.33.0:/export_ebs/projects}
+HOME_IP=${4:-172.255.33.0:/export_ebs/topmed_home}
+ADMIN_IP=${5:-172.255.33.0:/export_ebs/topmed_admin}
 echo ">>> Upgrading Ubuntu to R $R_VERSION"
 echo ">>>   Analysis Pipeline: $AP_BRANCH"
 echo ">>>   Project NFS address: $PROJ_IP"
