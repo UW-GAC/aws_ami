@@ -12,7 +12,7 @@
 #    b. TOPMed analysis packages (via bioconductor)
 #    c. Miscellaneous R packages (e.g., rmarkdown)
 #    d. UW analysis_pipeline
-#6. User accounts in topmed group and having home directories on EFS
+#6. User accounts in topmed group and having home directories on NFS
 #7. Optional RStudio server
 #8. Optional Shiny server
 #
@@ -34,11 +34,12 @@ f () {
     exit $errcode  # or use some other value or do return instead
 }
 trap f ERR
-R_VERSION=${1:-3.4.3}
-AP_BRANCH=${2:-devel}
+R_VERSION=${1:-3.5.1}
+AP_BRANCH=${2:-master}
 PROJ_IP=${3:-172.255.33.0:/export_ebs/projects}
 HOME_IP=${4:-172.255.33.0:/export_ebs/topmed_home}
 ADMIN_IP=${5:-172.255.33.0:/export_ebs/topmed_admin}
+RS_VERSION=1.1.447
 echo ">>> Upgrading Ubuntu to R $R_VERSION"
 echo ">>>   Analysis Pipeline: $AP_BRANCH"
 echo ">>>   Project NFS address: $PROJ_IP"
@@ -57,12 +58,11 @@ echo ">>> Installing R $R_VERSION ..."
 # install TOPMed R packages
 echo ">>> Installing TOPMed R packages ..."
 ./install_topmed_ubuntu.bash $R_VERSION $AP_BRANCH > install_topmed.log 2>&1
-# manually, mount the EFS volumes (the ip address depends on the
-#                                  created EFS volumes)
+# manually, mount the NFS volumes
 echo ">>> Mounting NFS volumes ..."
-if [ ! -d /projects ]; then
-    sudo mkdir /projects
-fi
+#if [ ! -d /projects ]; then
+#    sudo mkdir /projects
+#fi
 if [ ! -d /topmed_home ]; then
     sudo mkdir /topmed_home
 fi
@@ -82,35 +82,37 @@ fi
 if ! sudo mount | grep $ADMIN_IP > /dev/null; then
     sudo mount -t nfs4 -o vers=4.1 $ADMIN_IP /admin
 else
+
     echo "$ADMIN_IP already mounted"
 fi
 
 echo ">>> Adding topmed group ..."
 # create the topmed group
-if ! compgen -g | grep topmed > /dev/null; then
-    sudo addgroup topmed
+mgroup=topmed
+if ! compgen -g | grep $mgroup > /dev/null; then
+    sudo addgroup -gid 1002 $mgroup
     # update ubuntu account (current login)
-    sudo usermod -a -G topmed ubuntu
-    sudo usermod -g topmed ubuntu
+    sudo usermod -a -G $mgroup ubuntu
+    sudo usermod -g $mgroup ubuntu
 fi
 
 # create user account
 echo ">>> Creating UW user accounts  ..."
 uaccnt=levined
 if ! compgen -u | grep $uaccnt > /dev/null; then
-    sudo adduser --home /topmed_home/$uaccnt --ingroup topmed --disabled-password --gecos GECOS $uaccnt
+    sudo adduser --home /topmed_home/$uaccnt --uid 1002 --ingroup $mgroup --disabled-password --gecos GECOS $uaccnt
     sudo adduser $uaccnt sudo
 fi
 
 uaccnt=kuraisa
 if ! compgen -u | grep $uaccnt > /dev/null; then
-    sudo adduser --home /topmed_home/$uaccnt --ingroup topmed --disabled-password --gecos GECOS $uaccnt
+    sudo adduser --home /topmed_home/$uaccnt --uid 1001 --ingroup $mgroup --disabled-password --gecos GECOS $uaccnt
     sudo adduser $uaccnt sudo
 fi
 
 uaccnt=sdmorris
 if ! compgen -u | grep $uaccnt > /dev/null; then
-    sudo adduser --home /topmed_home/$uaccnt --ingroup topmed --disabled-password --gecos GECOS $uaccnt
+    sudo adduser --home /topmed_home/$uaccnt --uid 1003 --ingroup $mgroup --disabled-password --gecos GECOS $uaccnt
     sudo adduser $uaccnt sudo
 fi
 
@@ -118,43 +120,50 @@ fi
 echo ">>> Install RStudio server  ..."
 # install RStudio
 if [ ! -d /usr/local/src/rstudio ]; then
-    sudo apt-get install gdebi-core
+    sudo apt-get update
+    sudo apt-get install -y gdebi-core net-tools
     mkdir /usr/local/src/rstudio
     cd /usr/local/src/rstudio
-    wget https://download2.rstudio.org/rstudio-server-1.1.442-amd64.deb
-    sudo gdebi rstudio-server-1.1.442-amd64.deb
-
-    # add uw users to rstudio group
-    echo ">>> Adding rstudio-server group to UW accounts ..."
-    sudo usermod -a -G rstudio-server levined
-    sudo usermod -a -G rstudio-server kuraisa
-    sudo usermod -a -G rstudio-server sdmorris
-    # rstudio users
-    echo ">>> Creating RStudio accounts"
-    sudo adduser --ingroup rstudio-server --disabled-password --gecos GECOS rstudio1
-    sudo adduser --ingroup rstudio-server --disabled-password --gecos GECOS rstudio2
-    sudo adduser --ingroup rstudio-server --disabled-password --gecos GECOS rstudio3
-
-    # to add password (for rstudio) create a file
-    echo "rstudio1:rstudioserver1" | sudo chpasswd
-    echo "rstudio2:rstudioserver2" | sudo chpasswd
-    echo "rstudio3:rstudioserver3" | sudo chpasswd
+    wget https://download2.rstudio.org/rstudio-server-$RS_VERSION-amd64.deb
+    sudo gdebi -n rstudio-server-$RS_VERSION-amd64.deb
 else
     echo "RStudio Server already built"
 fi
+# add uw users to rstudio group
+echo ">>> Adding rstudio-server group to UW accounts ..."
+sudo usermod -a -G rstudio-server levined
+sudo usermod -a -G rstudio-server kuraisa
+sudo usermod -a -G rstudio-server sdmorris
+# rstudio users
+echo ">>> Creating RStudio accounts"
+uaccnt=rstudio1
+if ! compgen -u | grep $uaccnt > /dev/null; then
+    sudo adduser --ingroup rstudio-server --disabled-password --gecos GECOS $uaccnt
+    PWD=$uaccnt"server"
+    echo "$uaccnt:$PWD" | sudo chpasswd
+fi
+uaccnt=rstudio2
+if ! compgen -u | grep $uaccnt > /dev/null; then
+    sudo adduser --ingroup rstudio-server --disabled-password --gecos GECOS $uaccnt
+    PWD=$uaccnt"server"
+    echo "$uaccnt:$PWD" | sudo chpasswd
+fi
+uaccnt=rstudio3
+if ! compgen -u | grep $uaccnt > /dev/null; then
+    sudo adduser --ingroup rstudio-server --disabled-password --gecos GECOS $uaccnt
+    PWD=$uaccnt"server"
+    echo "$uaccnt:$PWD" | sudo chpasswd
+fi
 
 echo "Modifying /etc/rc.local to mount nfs volumes ..."
-# update /etc/rc.local to mount efs volumes
+# update /etc/rc.local to mount NFS volumes
 echo '#!/bin/sh -e' > rc.local
 echo '#' >> rc.local
 echo '# rc.local' >> rc.local
 echo '# ' >> rc.local
-echo '# mount efs topmed volumes' >> rc.local
-echo mount -t nfs4 -o vers=4.1 $PROJ_IP /projects >> rc.local
+echo '# mount nfs topmed volumes' >> rc.local
+#echo mount -t nfs4 -o vers=4.1 $PROJ_IP /projects >> rc.local
 echo mount -t nfs4 -o vers=4.1 $HOME_IP /topmed_home >> rc.local
 echo mount -t nfs4 -o vers=4.1 $ADMIN_IP /admin >> rc.local
 echo exit 0 >> rc.local
 sudo cp rc.local /etc/rc.local
-
-
-# install shiny server
