@@ -17,30 +17,26 @@ f () {
 }
 trap f ERR
 
-R_VERSION=${1:-3.3.4}
-AP_BRANCH=${2:-devel}
-# call a python script to install topmed packages
-RSCRIPT="installtopmed.R"
-R_HOME="/usr/local/R-$R_VERSION/lib/R"
-if [ -f $RSCRIPT ]; then
-    rm $RSCRIPT
-fi
-python ./install_topmed_ubuntu.py  -s "$RSCRIPT"
-if [ $? -eq 0 ]; then
-    if [ -f $RSCRIPT ]; then
-        echo "Installing TOPMed packages ..."
-        chmod +x "$RSCRIPT"
-        ./"$RSCRIPT"
+R_VERSION=${1:-3.5.1}
+AP_BRANCH=${2:-master}
+
+ANALYSIS_PIPELINE_BRANCH=$AP_BRANCH
+echo "Building version of  $ANALYSIS_PIPELINE_BRANCH ..."
+
+# install topmed pipeline
+cd /usr/local/src
+if [ ! -d /usr/local/src/analysis_pipeline ]; then
+    git clone -b $ANALYSIS_PIPELINE_BRANCH https://github.com/UW-GAC/analysis_pipeline.git
+    # execute R script to install topmed packages
+    cd /usr/local/src/analysis_pipeline
+    Rscript --vanilla --no-save --slave install_packages.R
+
+    # create a link analysis_pipeline
+    if [ -d /usr/local/analysis_pipeline ]; then
+        unlink /usr/local/analysis_pipeline
     fi
-fi
-# install analysis_pipeliine
-AP_PATH="/usr/local/analysis_pipeline"
-if [ ! -d "$AP_PATH" ]; then
-    echo "Installing analysis_pipeline ..."
-    cd /usr/local
-    git clone -b $AP_BRANCH https://github.com/UW-GAC/analysis_pipeline.git
-    cd $AP_PATH
-    R CMD INSTALL TopmedPipeline
+
+    ln -s /usr/local/src/analysis_pipeline /usr/local/analysis_pipeline
 else
-    echo "Analysis_pipeline already installed"
+    echo "analysis_pipeline and topmed packages already installed"
 fi
