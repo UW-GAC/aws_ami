@@ -34,4 +34,7 @@ sudo apt-get update && sudo apt-get install -y \
   libnetcdf-dev \
   libxml2-dev \
   libpango1.0-dev \
-  pandoc
+  pandoc \
+  build-essential \
+  checkinstall \
+  libncurses-dev

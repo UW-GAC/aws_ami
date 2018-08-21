@@ -37,5 +37,5 @@ while [ $CURRENT_USER -le $NO_USERS ]; do
     sudo adduser $USER sudo
     PWD=$BASE_UNAME"server"$CURRENT_USER
     echo "$USER:$PWD" | sudo chpasswd
-    let CURRENT_USER=CURRENT_USER-1
+    let CURRENT_USER=CURRENT_USER+1
 done

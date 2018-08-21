@@ -21,5 +21,5 @@ while [ $CURRENT_USER -le $NO_USERS ]; do
     # copy over script
     sudo cp ./$SCRIPT /home/$USER
     sudo chown $USER /home/$USER/$SCRIPT
-    let CURRENT_USER=CURRENT_USER-1
+    let CURRENT_USER=CURRENT_USER+1
 done
