@@ -128,6 +128,30 @@ if ! compgen -u | grep $uaccnt > /dev/null; then
     sudo adduser $uaccnt sudo
 fi
 
+uaccnt=amarise
+if ! compgen -u | grep $uaccnt > /dev/null; then
+    sudo adduser --home /topmed_home/$uaccnt --uid 1012 --ingroup $mgroup --disabled-password --gecos GECOS $uaccnt
+    sudo adduser $uaccnt sudo
+fi
+
+uaccnt=avmikh
+if ! compgen -u | grep $uaccnt > /dev/null; then
+    sudo adduser --home /topmed_home/$uaccnt --uid 1013 --ingroup $mgroup --disabled-password --gecos GECOS $uaccnt
+    sudo adduser $uaccnt sudo
+fi
+
+uaccnt=calaurie
+if ! compgen -u | grep $uaccnt > /dev/null; then
+    sudo adduser --home /topmed_home/$uaccnt --uid 1014 --ingroup $mgroup --disabled-password --gecos GECOS $uaccnt
+    sudo adduser $uaccnt sudo
+fi
+
+uaccnt=analyst
+if ! compgen -u | grep $uaccnt > /dev/null; then
+    sudo adduser --home /topmed_home/$uaccnt --uid 1099 --ingroup $mgroup --disabled-password --gecos GECOS $uaccnt
+    sudo adduser $uaccnt sudo
+fi
+
 
 # install RStudio server
 echo ">>> Install RStudio server  ..."
